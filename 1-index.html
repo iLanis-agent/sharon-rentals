@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>דירות להשכרה באזור השרון</title>
+<style>
+:root{--bg:#0f1115;--card:#1a1d24;--line:#2a2e39;--txt:#e8eaf0;--dim:#9aa0ae;--acc:#e2703a;--ok:#3fae6a;--warn:#d9a13b}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Heebo','Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--txt);padding:24px;max-width:1200px;margin:0 auto}
+h1{font-size:26px;margin-bottom:4px}
+.sub{color:var(--dim);font-size:14px;margin-bottom:18px}
+.crit{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px;font-size:13px;color:var(--dim);margin-bottom:20px;line-height:1.7}
+.crit b{color:var(--txt)}
+.filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin-bottom:20px}
+.fgroup{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.flabel{font-size:12px;color:var(--dim);margin-inline-end:2px}
+.chip{border:1px solid var(--line);background:transparent;color:var(--dim);border-radius:999px;padding:5px 13px;font-size:13px;cursor:pointer;font-family:inherit}
+.chip.on{background:var(--acc);border-color:var(--acc);color:#fff}
+select,input[type=range]{accent-color:var(--acc)}
+.pricewrap{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--dim)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.card img.cover{width:100%;height:210px;object-fit:cover;background:#242834;display:block}
+.noimg{width:100%;height:210px;display:flex;align-items:center;justify-content:center;color:var(--dim);background:#242834;font-size:14px}
+.body{padding:14px 16px;display:flex;flex-direction:column;gap:8px;flex:1}
+.price{font-size:22px;font-weight:700;color:var(--acc)}
+.addr{font-size:15px;font-weight:600}
+.meta{font-size:13px;color:var(--dim)}
+.badges{display:flex;flex-wrap:wrap;gap:6px}
+.badge{font-size:11.5px;border:1px solid var(--line);border-radius:6px;padding:2px 8px;color:var(--dim)}
+.badge.ok{color:var(--ok);border-color:var(--ok)}
+.badge.warn{color:var(--warn);border-color:var(--warn)}
+.matchline{font-size:12.5px;font-weight:600}
+.matchline.ok{color:var(--ok)}.matchline.warn{color:var(--warn)}
+.desc{font-size:13px;color:var(--dim);line-height:1.6;white-space:pre-line;max-height:110px;overflow:hidden}
+.thumbs{display:flex;gap:6px;overflow-x:auto}
+.thumbs img{height:64px;width:96px;object-fit:cover;border-radius:8px;flex:none}
+a.src{margin-top:auto;font-size:13px;color:var(--acc);text-decoration:none;font-weight:600;padding-top:6px}
+.count{font-size:14px;color:var(--dim);margin-bottom:14px}
+footer{margin-top:28px;color:var(--dim);font-size:12px;line-height:1.7}
+</style>
+</head>
+<body>
+<h1>דירות ובתים להשכרה באזור השרון</h1>
+<div class="sub">אוסף מודעות מיד2 · עודכן ב־10.09.2026</div>
+<div class="crit" id="crit"></div>
+<div class="filters" id="filters"></div>
+<div class="count" id="count"></div>
+<div class="grid" id="grid"></div>
+<footer id="foot"></footer>
+<script>
+let DATA=null;
+const state={cities:new Set(),types:new Set(),match:'all',mamad:false,parking:false,maxPrice:9000};
+const fmt=n=>n==null?'—':Number(n).toLocaleString('he-IL');
+function uniq(a){return [...new Set(a.filter(Boolean))]}
+async function boot(){
+  DATA=await (await fetch('data/listings.json')).json();
+  const c=DATA.criteria;
+  document.getElementById('crit').innerHTML=
+    '<b>קריטריונים:</b> '+c.rooms+' חדרים · עד ₪'+fmt(c.maxPrice)+' · קומת קרקע / בית פרטי עם גינה · חניה · ממ״ד<br>'+
+    '<b>אזורים:</b> '+c.areas.join(' · ')+'<br>'+
+    '<b>מקורות:</b> יד2 (נאסף '+new Date(DATA.generatedAt).toLocaleString('he-IL')+') · פייסבוק מרקטפלייס: לא נאסף - נדרשת התחברות לפייסבוק';
+  buildFilters(); render();
+}
+function buildFilters(){
+  const F=document.getElementById('filters');
+  const cities=uniq(DATA.listings.map(l=>l.city));
+  const types=uniq(DATA.listings.map(l=>l.type));
+  let h='<div class="fgroup"><span class="flabel">עיר:</span>'+cities.map(c=>'<button class="chip" data-g="cities" data-v="'+c+'">'+c+'</button>').join('')+'</div>';
+  h+='<div class="fgroup"><span class="flabel">סוג:</span>'+types.map(t=>'<button class="chip" data-g="types" data-v="'+t+'">'+t+'</button>').join('')+'</div>';
+  h+='<div class="fgroup"><span class="flabel">התאמה:</span><button class="chip on" data-m="all">הכל</button><button class="chip" data-m="exact">מלאה</button><button class="chip" data-m="near">חלקית</button></div>';
+  h+='<div class="fgroup"><span class="flabel">חיובי:</span><button class="chip" data-t="mamad">ממ״ד</button><button class="chip" data-t="parking">חניה</button></div>';
+  h+='<div class="pricewrap"><span class="flabel">עד ₪<span id="pv">9,000</span></span><input type="range" min="5000" max="9000" step="100" value="9000" id="pr"></div>';
+  F.innerHTML=h;
+  F.querySelectorAll('.chip[data-g]').forEach(b=>b.onclick=()=>{const s=state[b.dataset.g];s.has(b.dataset.v)?s.delete(b.dataset.v):s.add(b.dataset.v);b.classList.toggle('on');render();});
+  F.querySelectorAll('.chip[data-m]').forEach(b=>b.onclick=()=>{state.match=b.dataset.m;F.querySelectorAll('.chip[data-m]').forEach(x=>x.classList.toggle('on',x===b));render();});
+  F.querySelectorAll('.chip[data-t]').forEach(b=>b.onclick=()=>{state[b.dataset.t]=!state[b.dataset.t];b.classList.toggle('on');render();});
+  document.getElementById('pr').oninput=e=>{state.maxPrice=+e.target.value;document.getElementById('pv').textContent=fmt(state.maxPrice);render();};
+}
+function pass(l){
+  if(state.cities.size&&!state.cities.has(l.city))return false;
+  if(state.types.size&&!state.types.has(l.type))return false;
+  if(state.match!=='all'&&l.match!==state.match)return false;
+  if(state.mamad&&!l.mamad)return false;
+  if(state.parking&&!l.parking)return false;
+  if(l.price&&l.price>state.maxPrice)return false;
+  return true;
+}
+function render(){
+  const g=document.getElementById('grid');
+  const items=DATA.listings.filter(pass);
+  document.getElementById('count').textContent='מוצגות '+items.length+' מתוך '+DATA.listings.length+' מודעות';
+  g.innerHTML=items.map(l=>{
+    const img=l.images&&l.images.length?'<img class="cover" src="'+l.images[0]+'" alt="" loading="lazy" onerror="this.outerHTML=\'<div class=noimg>אין תמונה זמינה</div>\'">':'<div class="noimg">אין תמונה זמינה</div>';
+    const addr=[l.street?l.street+(l.houseNumber?' '+l.houseNumber:''):null,l.neighborhood,l.city].filter(Boolean).join(', ');
+    const meta=[l.type,l.rooms?l.rooms+' חדרים':null,l.floor===0?'קומת קרקע':(l.floor!=null?'קומה '+l.floor:null),l.sqm&&l.sqm>2?l.sqm+' מ״ר':null,l.sqmBuilt?l.sqmBuilt+' מ״ר בנוי':null,l.gardenSqm?'גינה '+l.gardenSqm+' מ״ר':l.gardenNote].filter(Boolean).join(' · ');
+    const badges=[];
+    badges.push('<span class="badge '+(l.mamad?'ok':'warn')+'">ממ״ד '+(l.mamad?'✓':'✗')+'</span>');
+    badges.push('<span class="badge '+(l.parking?'ok':'warn')+'">חניה '+(l.parking?('✓'+(l.parkingSpaces>1?' ×'+l.parkingSpaces:'')):'✗')+'</span>');
+    badges.push('<span class="badge ok">גינה ✓</span>');
+    (l.features||[]).filter(f=>!['חניה','ממ״ד'].includes(f)).forEach(f=>badges.push('<span class="badge">'+f+'</span>'));
+    const match=l.match==='exact'?'<div class="matchline ok">התאמה מלאה לקריטריונים</div>':'<div class="matchline warn">התאמה חלקית: '+(l.missingCriteria||[]).join(', ')+'</div>';
+    const thumbs=(l.images||[]).slice(1,5).map(u=>'<img src="'+u+'" loading="lazy" onerror="this.remove()">').join('');
+    const extra=[l.condition?'מצב: '+l.condition:null,l.entranceDate?'כניסה: '+l.entranceDate:null,'עודכן: '+l.updatedAt].filter(Boolean).join(' · ');
+    return '<div class="card">'+img+'<div class="body">'+
+      '<div class="price">₪'+fmt(l.price)+' <span style="font-size:13px;color:var(--dim);font-weight:400">לחודש</span></div>'+
+      '<div class="addr">'+addr+'</div><div class="meta">'+meta+'</div>'+match+
+      '<div class="badges">'+badges.join('')+'</div>'+
+      (l.description?'<div class="desc">'+l.description.replace(/</g,'&lt;')+'</div>':'')+
+      (thumbs?'<div class="thumbs">'+thumbs+'</div>':'')+
+      '<div class="meta">'+extra+'</div>'+
+      '<a class="src" href="'+l.url+'" target="_blank" rel="noopener">למודעה המלאה ביד2 ←</a></div></div>';
+  }).join('');
+  document.getElementById('foot').innerHTML='הנתונים נאספו ממודעות פומביות ביד2 ב־'+new Date(DATA.generatedAt).toLocaleString('he-IL')+'. המודעות שייכות למפרסמיהן; לפרטים וליצירת קשר - קישור למקור. אין בדשבורד מידע אישי או פרטי.';
+}
+boot();
+</script>
+</body>
+</html>
