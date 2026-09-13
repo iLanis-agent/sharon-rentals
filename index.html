@@ -43,7 +43,7 @@ footer{margin-top:28px;color:var(--dim);font-size:12px;line-height:1.7}
 </head>
 <body>
 <h1>דירות ובתים להשכרה באזור השרון</h1>
-<div class="sub">אוסף מודעות מיד2 · עודכן ב־10.09.2026</div>
+<div class="sub" id="sub">אוסף מודעות מיד2</div>
 <div class="crit" id="crit"></div>
 <div class="filters" id="filters"></div>
 <div class="count" id="count"></div>
@@ -56,6 +56,7 @@ const fmt=n=>n==null?'—':Number(n).toLocaleString('he-IL');
 function uniq(a){return [...new Set(a.filter(Boolean))]}
 async function boot(){
   DATA=await (await fetch('data/listings.json')).json();
+  document.getElementById('sub').innerHTML='אוסף מודעות מיד2 · עודכן ב־'+new Date(DATA.generatedAt).toLocaleDateString('he-IL');
   const c=DATA.criteria;
   document.getElementById('crit').innerHTML=
     '<b>קריטריונים:</b> '+c.rooms+' חדרים · עד ₪'+fmt(c.maxPrice)+' · קומת קרקע / בית פרטי עם גינה · חניה · ממ״ד<br>'+
